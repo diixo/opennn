@@ -214,13 +214,8 @@ public:
 
    string write_activation_function_expression() const;
 
-   string write_expression_c() const final;
-   string write_combinations_c() const;
-   string write_activations_c() const;
-
    string write_combinations_python() const;
    string write_activations_python() const;
-   string write_expression_python() const final;
 
    // Serialization methods
 
@@ -302,23 +297,23 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     void print() const
     {
-        cout << "Outputs:" << endl;
-        cout << outputs_dimensions << endl;
-
         cout << "Combinations:" << endl;
         cout << combinations.dimensions() << endl;
 
         cout << "Activations derivatives:" << endl;
         cout << activations_derivatives.dimensions() << endl;
 
+        cout << "Outputs dimensions:" << endl;
+        cout << outputs_dimensions << endl;
+
         cout << "Outputs:" << endl;
         cout << TensorMap<Tensor<type,2>>(outputs_data, outputs_dimensions(0), outputs_dimensions(1)) << endl;
 
-//        cout << "Combinations:" << endl;
-//        cout << combinations << endl;
+        cout << "Combinations:" << endl;
+        cout << combinations << endl;
 
-//        cout << "Activations derivatives:" << endl;
-//        cout << activations_derivatives << endl;
+        cout << "Activations derivatives:" << endl;
+        cout << activations_derivatives << endl;
     }
 
     Tensor<type, 2> combinations;

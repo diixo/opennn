@@ -1,3 +1,6 @@
+#ifndef OPENNN_CONFIG_H
+#define OPENNN_CONFIG_H
+
 #include "half.hpp"
 
 #define NUMERIC_LIMITS_MIN 0.000001
@@ -21,9 +24,7 @@
 
 #define NOMINMAX
 
-#ifndef EIGEN_USE_THREADS
 #define EIGEN_USE_THREADS
-#endif
 
 //#pragma warning(push, 0)
 #include "tinyxml2.h"
@@ -56,3 +57,4 @@ namespace opennn
     using type = float;
 }
 
+#endif

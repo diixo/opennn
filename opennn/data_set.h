@@ -113,7 +113,7 @@ public:
 
     /// Enumeration of the learning tasks.
 
-    enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification};
+    enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, AutoAssociation};
 
     /// This enumeration represents the possible uses of an sample
     /// (training, selection, testing or unused).
@@ -295,6 +295,7 @@ public:
 
     Tensor<Column, 1> get_columns() const;
     Tensor<Column, 1> get_time_series_columns() const;
+    Tensor<Column, 1> get_associative_columns() const;
     Index get_time_series_data_rows_number() const;
     Tensor<Column, 1> get_input_columns() const;
     Tensor<bool, 1> get_input_columns_binary() const;
@@ -380,6 +381,7 @@ public:
     Tensor<type, 2>* get_data_pointer();
 
     const Tensor<type, 2>& get_time_series_data() const;
+    const Tensor<type, 2>& get_associative_data() const;
 
     Tensor<type, 2> get_training_data() const;
     Tensor<type, 2> get_selection_data() const;
@@ -419,6 +421,7 @@ public:
     Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
     Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
+    Tensor<string, 2> get_text_data_file_preview() const;
 
     Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
@@ -673,7 +676,7 @@ public:
 
     // Inputs correlations
 
-    Tensor<Correlation, 2> calculate_input_columns_correlations() const;
+    Tensor<Tensor<Correlation, 2>, 1> calculate_input_columns_correlations(/*CorrelationMethod::Both*/) const;
 
     void print_inputs_correlations() const;
 
@@ -682,6 +685,7 @@ public:
     // Inputs-targets correlations
 
     Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
+    Tensor<Correlation, 2> calculate_input_target_columns_correlations_spearman() const;
 
     void print_input_target_columns_correlations() const;
 
@@ -734,16 +738,26 @@ public:
     // Time series methods
 
     void transform_time_series();
-
     void transform_time_series_columns();
     void transform_time_series_data();
+
     void get_time_series_columns_number(const Index&);
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_columns_number(const Index&);
 
+    void get_associative_columns_number(const Index&);
+    void set_associative_data(const Tensor<type, 2>&);
+    void set_associative_columns_number(const Index&);
+
     Tensor<type, 2> get_time_series_column_data(const Index&) const;
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
+
+    // Autoassiciative methods
+
+    void transform_associative_dataset();
+    void transform_associative_columns();
+    void transform_associative_data();
 
     // Image classification methods
 
@@ -798,9 +812,13 @@ public:
 
     void save_time_series_data_binary(const string&) const;
 
+    void save_auto_associative_data_binary(const string&) const;
+
     void load_data_binary();
 
     void load_time_series_data_binary(const string&);
+
+    void load_auto_associative_data_binary(const string&);
 
     void check_input_csv(const string&, const char&) const;
 
@@ -811,6 +829,7 @@ public:
     // Data load methods
 
     void read_csv();
+
 
     Tensor<unsigned char, 1> read_bmp_image(const string&);
 
@@ -983,8 +1002,10 @@ private:
     /// The number of columns is the number of variables before time series transformation.
 
     Tensor<type, 2> time_series_data;
+    Tensor<type, 2> associative_data;
 
     Tensor<Column, 1> time_series_columns;
+    Tensor<Column, 1> associative_columns;
 
     Index gmt = 0;
 

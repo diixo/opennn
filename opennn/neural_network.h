@@ -52,7 +52,7 @@ class NeuralNetwork
 
 public:
 
-   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, TextGeneration};
+   enum class ProjectType{Approximation, Classification, Forecasting, ImageClassification, TextClassification, TextGeneration, AutoAssociation};
 
    // Constructors
 
@@ -205,7 +205,7 @@ public:
 
    // Output 
 
-   Tensor<type, 2> calculate_outputs(type*, Tensor<Index, 1>&);
+   Tensor<type, 2> calculate_outputs(type*, const Tensor<Index, 1>&);
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>&);
 
@@ -246,13 +246,17 @@ public:
 
    // Expression methods
 
-   string write_expression() const;
-   string write_expression_python() const;
-   string write_expression_c() const;
-   string write_expression_api() const;
+    string write_expression() const;
+    
+    string write_expression_python() const;
+    string write_expression_c() const;
+    string write_expression_api() const;
+    string write_expression_javascript() const;
 
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
+    void save_expression_c(const string&) const;
+    void save_expression_python(const string&) const;
+    void save_expression_api(const string&) const;
+    void save_expression_javascript(const string&) const;
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
@@ -385,6 +389,8 @@ struct NeuralNetworkForwardPropagation
             cout << "Layer " << i + 1 << ": " << neural_network_pointer->get_trainable_layers_pointers()(i)->get_type_string() << endl;
 
             layers(i)->print();
+
+            cout << "parameters: " << endl << neural_network_pointer->get_trainable_layers_pointers()(i)->get_parameters() << endl;
         }
     }
 
