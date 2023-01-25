@@ -317,7 +317,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
     for(Index i = 0;  i < outputs_number; i++)
-    {        
+    {
         const Tensor<type,1> targets = testing_targets.chip(i,1);
         const Tensor<type,1> outputs = testing_outputs.chip(i,1);
 
@@ -1503,18 +1503,14 @@ type TestingAnalysis::calculate_determination_coefficient(const Tensor<type,1>& 
 
 #endif
 
-    type numerador = 0;
     const Tensor<type, 0> targets_mean = targets.mean();
-    type  denominador = 0;
 
-    // @todo Implementation with tensor operations
-    for(Index i = 0; i < outputs.size(); i++)
-    {
-        numerador += (targets(i) - outputs(i))*(targets(i) - outputs(i));
-        denominador += (targets(i) - targets_mean(0))*(targets(i) - targets_mean(0));
-    }
+    Tensor<type, 0> numerator = ((targets-outputs)*(targets-outputs)).sum();
+    Tensor<type, 0> denominator = ((- targets_mean(0) + targets)*(- targets_mean(0) + targets)).sum();
 
-    type determination_coefficient = type(1) - (numerador/denominador);
+    denominator(0) == 0 ? denominator(0) = 1 : 0;
+
+    type determination_coefficient = type(1) - (numerator(0)/denominator(0));
 
     return determination_coefficient;
 };
@@ -1531,7 +1527,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 {
     const Index testing_samples_number = targets.dimension(0);
 
-    Tensor<Index, 2> confusion(2, 2);
+    Tensor<Index, 2> confusion(3, 3);
 
     Index true_positive = 0;
     Index false_negative = 0;
@@ -1546,7 +1542,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         target = targets(i,0);
         output = outputs(i,0);
 
-        if(target > decision_threshold && output > decision_threshold)
+        if(target >= decision_threshold && output >= decision_threshold)
         {
             true_positive++;
         }
@@ -1554,7 +1550,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             false_negative++;
         }
-        else if(target <= decision_threshold && output > decision_threshold)
+        else if(target < decision_threshold && output >= decision_threshold)
         {
             false_positive++;
         }
@@ -1578,6 +1574,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     confusion(0,1) = false_negative;
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
+
+    confusion(0,2) = true_positive + false_negative;
+    confusion(1,2) = false_positive + true_negative;
+    confusion(2,0) = true_positive + false_positive;
+    confusion(2,1) = true_negative + false_negative;
+    confusion(2,2) = testing_samples_number;
 
     const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
 
@@ -1616,8 +1618,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         throw invalid_argument(buffer.str());
     }
 
-    Tensor<Index, 2> confusion(targets_number, targets_number);
+    Tensor<Index, 2> confusion(targets_number + 1, targets_number + 1);
     confusion.setZero();
+    confusion(targets_number, targets_number) = samples_number;
 
     Index target_index = 0;
     Index output_index = 0;
@@ -1627,7 +1630,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
 
-        confusion(target_index,output_index)++;
+        confusion(target_index, output_index)++;
+        confusion(target_index, targets_number)++;
+        confusion(targets_number, output_index)++;
     }
 
     return confusion;
@@ -1936,12 +1941,12 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         type target;
         type output;
 
-        for(Index j = 0; j <= targets.size(); j++)
+        for(Index j = 0; j < targets.size(); j++)
         {
             target = targets(j,0);
             output = outputs(j,0);
 
-            if(target > threshold && output > threshold)
+            if(target >= threshold && output >= threshold)
             {
                 true_positive++;
             }
@@ -1949,7 +1954,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
             {
                 false_negative++;
             }
-            else if(target <= threshold && output > threshold)
+            else if(target < threshold && output >= threshold)
             {
                 false_positive++;
             }
@@ -1963,7 +1968,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         roc_curve(i,1) = static_cast<type>(true_negative)/(static_cast<type>(true_negative + false_positive));
         roc_curve(i,2) = static_cast<type>(threshold);
 
-        if(  isnan(roc_curve(i,0)) )
+        if(isnan(roc_curve(i,0)) )
         {
             roc_curve(i,0) = 1;
         }
@@ -2109,123 +2114,6 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     return confidence_limit;
 }
 
-/*
-/// Returns the confidence limit for the area under a roc curve.
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-/// @param area_under_curve Area under curve.
-
-type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type& area_under_curve) const
-{
-    const Tensor<Index, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
-
-    const Index total_positives = positives_negatives_rate[0];
-    const Index total_negatives = positives_negatives_rate[1];
-
-    if(total_positives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const.\n"
-               << "Number of positive samples("<< total_positives <<") must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(total_negatives == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-               << "calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const.\n"
-               << "Number of negative samples("<< total_negatives <<") must be greater than zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    const type Q_1 = area_under_curve/(static_cast<type>(2.0) -area_under_curve);
-    const type Q_2 = (static_cast<type>(2.0) *area_under_curve*area_under_curve)/(static_cast<type>(1.0) *area_under_curve);
-
-    const type confidence_limit = static_cast<type>(1.64485) *sqrt((area_under_curve*(static_cast<type>(1.0) - area_under_curve)
-                                  + (type(total_positives)-static_cast<type>(1.0))*(Q_1-area_under_curve*area_under_curve)
-                                  + (type(total_negatives)-static_cast<type>(1.0))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives)));
-
-    return confidence_limit;
-}
-*/
-/*
-/// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
-/// @param targets Testing target data.
-/// @param outputs Testing output data.
-
-type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
-{
-    const Index maximum_points_number = 1000;
-
-    Index step_size;
-
-    const Index testing_samples_number = targets.dimension(0);
-    Index points_number;
-
-    if(testing_samples_number > maximum_points_number)
-    {
-        step_size = testing_samples_number/maximum_points_number;
-        points_number = testing_samples_number/step_size;
-    }
-    else
-    {
-        points_number = testing_samples_number;
-        step_size = 1;
-    }
-
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
-
-    for(Index i = 0; i < targets_outputs.dimension(1); i++)
-    {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i - targets.dimension(1));
-        }
-    }
-
-    // Sort by ascending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
-    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
-
-    const Tensor<type, 2> roc_curve = calculate_roc_curve(sorted_targets, sorted_outputs);
-
-    type threshold = type(0);
-    type optimal_threshold = type(0.5);
-
-    type minimun_distance = numeric_limits<type>::max();
-    type distance;
-
-    Index current_index;
-
-    for(Index i = 0; i < points_number; i++)
-    {
-        current_index = i*step_size;
-
-        threshold = sorted_outputs(current_index, 0);
-
-        distance = static_cast<type>(sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1))));
-
-        if(distance < minimun_distance)
-        {
-            optimal_threshold = threshold;
-
-            minimun_distance = distance;
-        }
-    }
-
-    return optimal_threshold;
-}
-*/
 
 /// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner(0,1).
 /// @param targets Testing target data.
@@ -3498,9 +3386,9 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
     classification_statistics_file << "minimum,maximum,mean,std" << endl;
     classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
     classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";
-/*    
+/*
     classification_statistics_file << misclassified_numerical_probabilities.mean() << ",";
-*/    
+*/
     classification_statistics_file << standard_deviation(misclassified_numerical_probabilities);
 }
 

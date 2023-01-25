@@ -44,6 +44,8 @@ struct Descriptives {
 
   explicit Descriptives(const type&, const type&, const type&, const type&);
 
+  explicit Descriptives(const Tensor<type, 1>&);
+
   // Set methods
 
   void set(const type&, const type&, const type&, const type&);
@@ -294,9 +296,6 @@ struct Histogram
 
      // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);
-
-     // Means by categories
-     Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix);
 
      // NAN methods
      Index count_nan(const Tensor<type, 1>&);

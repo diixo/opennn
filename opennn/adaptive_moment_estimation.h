@@ -51,7 +51,7 @@ struct AdaptiveMomentEstimationData;
 
 class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {
-
+    
 public:
 
    // Constructors
@@ -164,7 +164,9 @@ private:
 
    /// Training and selection batch size.
 
-   Index batch_samples_number = 10;
+
+   Index batch_samples_number = 1000;
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"

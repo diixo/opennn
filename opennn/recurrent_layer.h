@@ -139,7 +139,9 @@ public:
 
    void set_input_weights_constant(const type&);
    void set_recurrent_weights_constant(const type&);
-   void initialize_input_weights_Glorot(const type&, const type&);
+
+   void set_input_weights_random();
+   void set_recurrent_weights_random();
 
    void set_parameters_constant(const type&) final;
 
@@ -155,6 +157,8 @@ public:
 
    void calculate_activations(Tensor<type, 1>&,
                               Tensor<type, 1>&) const;
+
+   Tensor<type, 1> get_activations(const Tensor<type,1>&) const;
 
    void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
                                           type*, const Tensor<Index, 1>&,
@@ -172,13 +176,13 @@ public:
                                LayerBackPropagation*,
                                LayerBackPropagation*) const final;
 
-   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
-                                          PerceptronLayerBackPropagation*,
-                                          RecurrentLayerBackPropagation*) const;
+   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
+                               PerceptronLayerBackPropagation*,
+                               RecurrentLayerBackPropagation*) const;
 
-   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
-                                             ProbabilisticLayerBackPropagation*,
-                                             RecurrentLayerBackPropagation*) const;
+   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
+                               ProbabilisticLayerBackPropagation*,
+                               RecurrentLayerBackPropagation*) const;
 
    // Gradient
 
@@ -205,10 +209,6 @@ public:
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    string write_activation_function_expression() const;
-
-   string write_expression_python() const final;
-   string write_combinations_python() const;
-   string write_activations_python() const;
 
    // Serialization methods
 

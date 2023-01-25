@@ -1,4 +1,3 @@
-// @todo Test this method
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -122,9 +121,6 @@ public:
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-   string write_expression_c() const final;
-   string write_expression_python() const final;
 
 
 protected:

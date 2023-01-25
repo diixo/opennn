@@ -271,28 +271,9 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Set hardware to use. Default: Multi-core.
-
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
                       StochasticGradientDescentData& optimization_data) const
 {
-    back_propagation.assemble = true;
-
-    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-
-    NeuralNetwork* neural_network_pointer = back_propagation.loss_index_pointer->get_neural_network_pointer();
-
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_parameters = neural_network_pointer->get_layers_parameters();
-    const Tensor< Tensor< TensorMap< Tensor<type, 1> >*, 1>, 1> layers_gradient = back_propagation.get_layers_gradient();
-
-    for(Index i = 0; i < layers_parameters.size(); i++)
-    {
-        for(Index j = 0; j < layers_parameters(i).size(); j++)
-        {
-            (*layers_parameters(i)(j)).device(*thread_pool_device) += (*layers_gradient(i)(j))*(-learning_rate);
-        }
-    }
-/* /// OLD UPDATE PARAMETERS
     const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
 
     optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
@@ -307,10 +288,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
         }
         else
         {
-            optimization_data.nesterov_increment.device(*thread_pool_device)
-                    = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
-
-            back_propagation.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+            back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;;
         }
     }
     else
@@ -325,7 +303,6 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
     // Update parameters
 
     back_propagation.loss_index_pointer->get_neural_network_pointer()->set_parameters(back_propagation.parameters);
-*/
 }
 
 
