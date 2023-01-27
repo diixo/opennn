@@ -405,7 +405,7 @@ namespace indexing {
   #endif
   using Eigen::last;
   using Eigen::lastp1;
-  using Eigen::fix;
+  //using Eigen::fix;
 }
 
 } // end namespace Eigen

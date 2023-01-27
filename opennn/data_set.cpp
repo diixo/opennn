@@ -1056,7 +1056,7 @@ void DataSet::transform_associative_data()
 
     if(samples_number < 1000)
     {
-        Eigen::array<int, 2> bcast({1, 2});
+        Eigen::array<int, 2> bcast = {1, 2};
         data = associative_data.broadcast(bcast);
     }
     else
@@ -12364,9 +12364,18 @@ Tensor<type, 1> DataSet::get_bounding_box(const Tensor<unsigned char, 1>& image,
         Tensor<unsigned char, 1> image_green_channel_flatted_sorted(image_size_single_channel);
         Tensor<unsigned char, 1> image_blue_channel_flatted_sorted(image_size_single_channel);
 
-        image_red_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
-        image_green_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
-        image_blue_channel_flatted_sorted = image.slice(Eigen::array<Eigen::Index, 1>({2 * image_size_single_channel}), Eigen::array<Eigen::Index, 1>({image_size_single_channel}));
+        image_red_channel_flatted_sorted = image.slice(
+           Eigen::array<Eigen::Index, 1>{ {0} },
+           Eigen::array<Eigen::Index, 1>{ {image_size_single_channel} }
+        );
+        image_green_channel_flatted_sorted = image.slice(
+           Eigen::array<Eigen::Index, 1>{ {image_size_single_channel} },
+           Eigen::array<Eigen::Index, 1>{ {image_size_single_channel} }
+        );
+        image_blue_channel_flatted_sorted = image.slice(
+           Eigen::array<Eigen::Index, 1>{ {2 * image_size_single_channel} },
+           Eigen::array<Eigen::Index, 1>{ {image_size_single_channel} }
+        );
 
         Tensor<type, 1> bounding_box_red_channel(bounding_box_single_channel_size);
         Tensor<type, 1> bounding_box_green_channel(bounding_box_single_channel_size);
@@ -12678,8 +12687,10 @@ void DataSet::read_csv_1()
 
     if(has_columns_names)
     {
-        has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
-                                                                       Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
+       has_rows_labels ? set_columns_names(data_file_preview(0).slice(
+          Eigen::array<Eigen::Index, 1>{ {1} },
+          Eigen::array<Eigen::Index, 1>{ {data_file_preview(0).size() - 1} }
+       ))
                         : set_columns_names(data_file_preview(0));
     }
     else
